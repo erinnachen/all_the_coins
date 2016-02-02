@@ -1,12 +1,13 @@
 require 'json'
 require 'base64'
+
 class Transaction
   attr_reader :inputs, :outputs, :wallet, :timestamp, :txn_hash
-  def initialize(inputs, outputs, wallet, time = nil)
+  def initialize(inputs, outputs, wallet, timestamp = nil)
     @inputs = inputs
     @outputs = outputs
     @wallet = wallet
-    @timestamp = ((time ||= Time.now).to_f* 1000).to_i
+    @timestamp = (timestamp ||= (Time.now.to_f* 1000).to_i)
   end
 
   def input_signature
