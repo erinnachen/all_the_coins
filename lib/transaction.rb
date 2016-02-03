@@ -34,6 +34,10 @@ class Transaction
     @txn_hash = Digest::SHA256.hexdigest(hashable_transaction_string)
   end
 
+  def coinbase?
+    inputs.empty? && outputs.length == 1
+  end
+
   def to_json
     sign_inputs
     hash_transaction
