@@ -1,3 +1,5 @@
+require 'json'
+
 class Block
   attr_reader :transactions, :block_hash, :trans_hash, :parent_hash
   attr_accessor :nonce, :timestamp, :target
@@ -26,6 +28,28 @@ class Block
   end
 
   def set_target
+  end
+
+  def work
+    until block_hash.hex < target.hex do
+      self.nonce += 1
+      set_block_hash
+    end
+  end
+
+  def to_json
+    bout = {"header"=> generate_headers,
+            "transactions"=>transactions.map {|trans| trans.to_json} }
+    JSON.generate(bout)
+  end
+
+  def generate_headers
+    {"parent_hash" => parent_hash,
+     "transactions_hash" => trans_hash,
+     "target" => target,
+     "timestamp" => timestamp,
+     "nonce" => nonce,
+     "hash" => block_hash}
   end
 
 end
