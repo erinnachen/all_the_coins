@@ -1,18 +1,22 @@
+require 'bigdecimal'
 require 'json'
 
 class Block
-  attr_reader :transactions, :block_hash, :trans_hash, :parent_hash
-  attr_accessor :nonce, :timestamp, :target
+  attr_reader :transactions, :block_hash, :trans_hash, :parent_hash, :block_chain
+  attr_accessor :nonce, :timestamp, :target, :frequency
 
-  def initialize(parent_hash, transactions, opt_inputs = {})
+  def initialize(parent_hash, transactions, block_chain, opt_inputs = {})
     @transactions = transactions
     @parent_hash = parent_hash
+    @block_chain = block_chain
     opt_inputs.each do |key, value|
       send("#{key}=", value)
     end
     @nonce ||= 0
     @timestamp ||= (Time.now.to_f* 1000).to_i
-    @target ||= set_target
+    @frequency ||= 120.0
+    @target ||= get_target
+
     set_trans_hash
     set_block_hash
   end
@@ -27,7 +31,21 @@ class Block
     @block_hash = Digest::SHA256.hexdigest(block_to_hash)
   end
 
-  def set_target
+  def get_target
+    return "0000100000000000000000000000000000000000000000000000000000000000" if block_zero? || timestamps.length == 1
+    # get the last timestamps
+    # add current block timestamp and calculate average separation
+    # calculate the average separation
+    separations = timestamps.each_cons(2).map { |a,b| b-a }
+    avg_sep = separations.reduce(0, :+)/(separations.length.to_f)
+    factor = avg_sep / frequency
+    binding.pry
+    target = BigDecimal.new(factor*block_chain.find(parent_hash).target.to_i(16), 16)
+    target.to_i.to_s(16).rjust(64,'0')
+  end
+
+  def timestamps
+    block_chain.last_timestamps
   end
 
   def work
@@ -50,6 +68,10 @@ class Block
      "timestamp" => timestamp,
      "nonce" => nonce,
      "hash" => block_hash}
+  end
+
+  def block_zero?
+    parent_hash == "0000000000000000000000000000000000000000000000000000000000000000"
   end
 
 end
