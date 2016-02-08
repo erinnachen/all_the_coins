@@ -37,7 +37,7 @@ class WalletTest < Minitest::Test
   end
 
   def delete_temp_files
-    temp_files = Dir.entries('test/support' ).find_all {|path| path.include?("new")}
+    temp_files = Dir.entries('test/support').find_all {|path| path.include?("new")}
     temp_files.each do |file|
       FileUtils.remove_dir(File.expand_path("support/#{file}", __dir__))
     end

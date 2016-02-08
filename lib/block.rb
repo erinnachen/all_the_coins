@@ -33,19 +33,15 @@ class Block
 
   def get_target
     return "0000100000000000000000000000000000000000000000000000000000000000" if block_zero? || timestamps.length == 1
-    # get the last timestamps
-    # add current block timestamp and calculate average separation
-    # calculate the average separation
     separations = timestamps.each_cons(2).map { |a,b| b-a }
-    avg_sep = separations.reduce(0, :+)/(separations.length.to_f)
+    avg_sep = separations.reduce(0,:+)/(separations.length.to_f)
     factor = avg_sep / frequency
-    binding.pry
     target = BigDecimal.new(factor*block_chain.find(parent_hash).target.to_i(16), 16)
     target.to_i.to_s(16).rjust(64,'0')
   end
 
   def timestamps
-    block_chain.last_timestamps
+    block_chain.last_timestamps.last(10)
   end
 
   def work
