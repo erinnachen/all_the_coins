@@ -77,11 +77,11 @@ class BlockTest < Minitest::Test
   end
 
   def test_block_can_calculate_the_target_off_two_blocks_in_chain
-    opts = {timestamp: 1450564513, target: "0000100000000000000000000000000000000000000000000000000000000000"}
+    opts = {target: "0000100000000000000000000000000000000000000000000000000000000000"}
     b1 = Block.new('mock_hash', [], nil, opts)
 
     bc2 = mock('block_chain')
-    bc2.stubs(:last_timestamps).returns([1450564013, b1.timestamp])
+    bc2.stubs(:last_timestamps).returns([1450564013, 1450564513])
     bc2.stubs(:find).returns(b1)
     b2 = Block.new('mock_hash',[], bc2)
 
@@ -89,7 +89,18 @@ class BlockTest < Minitest::Test
   end
 
   def test_the_target_can_calculate_a_target_from_the_last_ten_transactions
-  
+    opts = {target: "000042aaaaaaaaaaadf6a6c5db88301d375a80fadcb6cbd82e00000000000000", timestamp: 1450565255}
+    b1 = Block.new('mock_hash', [], nil, opts)
+
+    bc2 = mock('block_chain')
+    bc2.stubs(:last_timestamps).returns([1450564570,
+      1450564662, 1450564674, 1450564747, 1450564866, 1450565013,
+      1450565023, 1450565059, 1450565170, b1.timestamp])
+    bc2.stubs(:find).returns(b1)
+    b2 = Block.new('mock_hash',[], bc2)
+
+    assert_equal "00002a48b0fcd6e9e408caf4bfe486cffb3cdfecfcb3effc5200000000000000", b2.target
+    assert b1.target > b2.target
   end
 
   def default_parent_hash
