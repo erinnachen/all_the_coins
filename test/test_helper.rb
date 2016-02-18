@@ -3,6 +3,15 @@ require 'simplecov'
 SimpleCov.start
 
 module TestHelpers
+  def setup
+    @wallet = Wallet.new(File.expand_path('support', __dir__))
+    super
+  end
+
+  def wallet
+    @wallet
+  end
+
   def default_parent_hash
     "0000000000000000000000000000000000000000000000000000000000000000"
   end

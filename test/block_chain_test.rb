@@ -2,11 +2,8 @@ require_relative 'test_helper'
 require 'block_chain'
 
 class BlockChainTest < Minitest::Test
-  attr_reader :wallet
   include TestHelpers
-  def setup
-    @wallet = Wallet.new(File.expand_path('support', __dir__))
-  end
+
 
   def test_a_block_chain_begins_with_0_height
     bc = BlockChain.new
