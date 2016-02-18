@@ -2,12 +2,16 @@ require 'json'
 require 'base64'
 
 class Transaction
-  attr_reader :inputs, :outputs, :wallet, :timestamp, :txn_hash
-  def initialize(inputs, outputs, wallet, timestamp = nil)
-    @inputs = inputs
-    @outputs = outputs
-    @wallet = wallet
-    @timestamp = (timestamp ||= (Time.now.to_f* 1000).to_i)
+  attr_accessor :inputs, :outputs, :timestamp
+  attr_reader :txn_hash
+  def initialize(inputs, outputs, timestamp = Time.now)
+    self.inputs = inputs
+    self.outputs = outputs
+    self.timestamp = format_timestamp(timestamp)
+  end
+
+  def format_timestamp(timestamp)
+    (timestamp.to_f*1000).to_i
   end
 
   def input_signature
@@ -26,12 +30,13 @@ class Transaction
   end
 
   def hash_transaction
+    @txn_hash = Digest::SHA256.hexdigest(transaction_string)
+  end
+
+  def transaction_string
     inputs_string = inputs.map { |i| i["source_hash"] + i["source_index"].to_s + i["signature"] }.join
     outputs_string = outputs.map { |i| i["amount"].to_s + i["address"] }.join
-
-    hashable_transaction_string = inputs_string + outputs_string + timestamp.to_s
-
-    @txn_hash = Digest::SHA256.hexdigest(hashable_transaction_string)
+    "#{inputs_string}#{outputs_string}#{timestamp}"
   end
 
   def coinbase?
@@ -39,8 +44,8 @@ class Transaction
   end
 
   def to_json
-    sign_inputs
-    hash_transaction
+    # sign_inputs
+    # hash_transaction
     tout = {"inputs"=> inputs,
             "outputs"=> outputs,
             "timestamp"=> timestamp,

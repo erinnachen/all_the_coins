@@ -4,7 +4,6 @@ require 'block_chain'
 class BlockChainTest < Minitest::Test
   include TestHelpers
 
-
   def test_a_block_chain_begins_with_0_height
     bc = BlockChain.new
     assert_equal 0, bc.height
