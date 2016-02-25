@@ -39,3 +39,15 @@
 7. Block generator (miner)
 
 "0a7ebfdbf0375be81641dbaf6ac9f862ba4f0d5e1cab600c8ce79248dfb9a653"
+
+### Miner what does she do?
+1. has it's own wallet
+2. has a block chain
+3. can create coinbase transactions
+4. can add blocks to a block chain
+5. can mine blocks
+6. can compare block chains
+7. can create its own transactions
+8. can verify transactions on a block chain
+9. can tell you how many coins any given public key has to spend
+10.  
