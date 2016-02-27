@@ -50,4 +50,4 @@
 7. can create its own transactions
 8. can verify transactions on a block chain
 9. can tell you how many coins any given public key has to spend
-10.  
+10. parse a block chain 

@@ -1,15 +1,29 @@
 require_relative 'test_helper'
 require 'block_chain'
 
+class BasicBlockChainTest < Minitest::Test
+  def test_can_create_a_chain_from_json
+    json_chain =  File.read(File.expand_path('support/small_sample_blocks.txt', __dir__))
+    bc = BlockChain.from_json(json_chain)
+    assert_equal 10, bc.height
+    assert_equal "00000ba50a43011e1a556e52f7eb30850bb4af40b773719e6de93dae4fe24c6a", bc.last.hash
+    assert_equal "0000036dcbdd3db35334e217e6d0191a942ad377e09f5173c9731a25f88f31df", bc.latest.hash
+  end
+
+end
+
+
 class BlockChainTest < Minitest::Test
   include TestHelpers
 
   def test_a_block_chain_begins_with_0_height
+    skip
     bc = BlockChain.new
     assert_equal 0, bc.height
   end
 
   def test_can_add_a_block_to_empty_chain
+    skip
     bc = BlockChain.new
     test_block = Block.new(default_parent_hash, [coinbase], nil, {target: easy_easy_target})
 
@@ -42,6 +56,7 @@ class BlockChainTest < Minitest::Test
     assert_equal 1, bc.height
     assert_equal test_block, bc.last
   end
+
 
   # def test_can_add_multiple_coinbase_transactions
   #   bc = BlockChain.new
