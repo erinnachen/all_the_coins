@@ -3,16 +3,18 @@ require 'json'
 require 'transaction'
 
 class Block
-  attr_accessor :hash, :parent_hash, :timestamp, :target, :nonce, :txns, :txns_hash
+  attr_accessor :hash, :parent_hash, :timestamp,
+                :target, :nonce, :transactions, :transactions_hash
 
-  def initialize(headers, transactions, opt_inputs = {})
-    self.parent_hash = headers[:parent_hash]
-    self.timestamp = headers[:timestamp]
-    self.target = headers[:target]
-    self.nonce = headers[:nonce]
-    self.hash = headers[:hash]
-    self.txns = transactions
-    self.txns_hash = headers[:transactions_hash]
+  def initialize(headers, transactions)
+    headers.each do |key, value|
+      send("#{key}=", value)
+    end
+    self.transactions = transactions
+  end
+
+  def hashable_string
+    "#{parent_hash}#{transactions_hash}#{timestamp}#{target}#{nonce}"
   end
 
   def self.from_json(json_block)
@@ -90,11 +92,11 @@ class Block
   #    "hash" => block_hash}
   # end
 
-private
-  def set_optional_inputs(opt_inputs)
-    opt_inputs.each do |key, value|
-      send("#{key}=", value)
-    end
-  end
+# private
+#   def set_optional_inputs(opt_inputs)
+#     opt_inputs.each do |key, value|
+#       send("#{key}=", value)
+#     end
+#   end
 
 end

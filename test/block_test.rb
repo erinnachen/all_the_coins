@@ -1,21 +1,20 @@
 require 'test_helper'
-require 'pry'
 require 'block'
 
 class BlockTest < Minitest::Test
   def test_can_create_a_block_from_JSON_input
     json_block = File.read(File.expand_path('support/sample_block.txt', __dir__))
     block = Block.from_json(json_block)
-    txn = block.txns.first
+    txn = block.transactions.first
 
     assert_equal "00000018d48278c3c5bca65b181c4af323b929d8fe0cb60324026abedd281c68", block.hash
     assert_equal "00000036964228a8c06f858a6e03367db795aa25a543343ac8951e4c58674f41", block.parent_hash
     assert_equal 1450592320, block.timestamp
     assert_equal "0000006a16d4b074bf923154046e2d7ef213cc668fadc5bf0fc0000000000000", block.target
     assert_equal 104414872, block.nonce
-    assert_equal "688d3e8a61ea1b77dbcca2f8fea73e47cf11f74beecd4f635f23333d25333a23", block.txns_hash
+    assert_equal "688d3e8a61ea1b77dbcca2f8fea73e47cf11f74beecd4f635f23333d25333a23", block.transactions_hash
 
-    assert_equal 1, block.txns.count
+    assert_equal 1, block.transactions.count
     assert_kind_of Transaction, txn
     assert_equal 1450592320607, txn.timestamp
     assert_equal "6124f26a956f6ee9e967b99edadca850079f3d4007b4e9a2c831ad73c5590a7b", txn.hash
@@ -23,6 +22,65 @@ class BlockTest < Minitest::Test
     assert_equal 1, txn.outputs.length
     c = {amount: 25, address: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn04rVGD\/selxmPcYRmjc\nHE19e5XQOueBekYEdQHD5q06mzuLQqErjJDANt80JjF6Y69dOU23cqlZ1B\/2Pj48\nK+OROFBlrT5usrAJa6we0Ku33w6avl47PXanhcfi39GKNr8RadCKHoG1klvKqVEm\nuhJO\/2foXAb6LATB0YoQuH8sDvUmLHSSPTTCBO2YGtsCvlMBNxdnvGVyZA5iIPwu\nw7DN00jG8RJn0KQRDgTM+nFNxcw9bIOrfSxOmNTDo1y8EFwFiYZ6rORLN+cNL50T\nU1Kl\/ShX0dfvXauSjliVSl3sll1brVC500HYlAK61ox5BakdZG6R+3tJKe1RAs3P\nNQIDAQAB\n-----END PUBLIC KEY-----\n"}
     assert_equal c, txn.outputs.first
+  end
+
+  def test_can_create_a_block_from_headers_and_transactions
+    headers = {
+        parent_hash: "0000000000000000000000000000000000000000000000000000000000000000",
+        transactions_hash: "203a0e37fa56a530f678d6331baf83a7b72d5d67c189aeb3ca17ed8a2a5bc654",
+        target: "0000100000000000000000000000000000000000000000000000000000000000",
+        timestamp: 1450564013,
+        nonce: 0,
+        hash: "000002b889bb79228ff41f86a65e2e0e143955cf746c2a33ed223d2701cd9c72"
+    }
+
+    transactions = [{inputs:[], outputs:[{amount: 25, address: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn04rVGD\/selxmPcYRmjc\nHE19e5XQOueBekYEdQHD5q06mzuLQqErjJDANt80JjF6Y69dOU23cqlZ1B\/2Pj48\nK+OROFBlrT5usrAJa6we0Ku33w6avl47PXanhcfi39GKNr8RadCKHoG1klvKqVEm\nuhJO\/2foXAb6LATB0YoQuH8sDvUmLHSSPTTCBO2YGtsCvlMBNxdnvGVyZA5iIPwu\nw7DN00jG8RJn0KQRDgTM+nFNxcw9bIOrfSxOmNTDo1y8EFwFiYZ6rORLN+cNL50T\nU1Kl\/ShX0dfvXauSjliVSl3sll1brVC500HYlAK61ox5BakdZG6R+3tJKe1RAs3P\nNQIDAQAB\n-----END PUBLIC KEY-----\n"}]}]
+
+    b = Block.new(headers, transactions)
+
+    assert_equal headers[:parent_hash], b.parent_hash
+    assert_equal headers[:transactions_hash], b.transactions_hash
+    assert_equal headers[:target], b.target
+    assert_equal headers[:timestamp], b.timestamp
+    assert_equal headers[:nonce], b.nonce
+    assert_equal headers[:hash], b.hash
+
+    assert_equal transactions.first[:inputs], b.transactions.first[:inputs]
+    assert_equal transactions.first[:outputs], b.transactions.first[:outputs]
+  end
+
+  def test_can_change_nonce_and_hash
+    headers = {
+        parent_hash: "0000000000000000000000000000000000000000000000000000000000000000",
+        transactions_hash: "203a0e37fa56a530f678d6331baf83a7b72d5d67c189aeb3ca17ed8a2a5bc654",
+        target: "0000100000000000000000000000000000000000000000000000000000000000",
+        timestamp: 1450564013,
+        nonce: 0,
+        hash: "000002b889bb79228ff41f86a65e2e0e143955cf746c2a33ed223d2701cd9c72"
+    }
+    transactions = [{inputs:[], outputs:[{amount: 25, address: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn04rVGD\/selxmPcYRmjc\nHE19e5XQOueBekYEdQHD5q06mzuLQqErjJDANt80JjF6Y69dOU23cqlZ1B\/2Pj48\nK+OROFBlrT5usrAJa6we0Ku33w6avl47PXanhcfi39GKNr8RadCKHoG1klvKqVEm\nuhJO\/2foXAb6LATB0YoQuH8sDvUmLHSSPTTCBO2YGtsCvlMBNxdnvGVyZA5iIPwu\nw7DN00jG8RJn0KQRDgTM+nFNxcw9bIOrfSxOmNTDo1y8EFwFiYZ6rORLN+cNL50T\nU1Kl\/ShX0dfvXauSjliVSl3sll1brVC500HYlAK61ox5BakdZG6R+3tJKe1RAs3P\nNQIDAQAB\n-----END PUBLIC KEY-----\n"}]}]
+    b = Block.new(headers, transactions)
+
+    b.nonce = 50000
+    b.hash = "9ed1515819dec61fd361d5fdabb57f41ecce1a5fe1fe263b98c0d6943b9b232e"
+
+    assert_equal 50000, b.nonce
+    assert_equal "9ed1515819dec61fd361d5fdabb57f41ecce1a5fe1fe263b98c0d6943b9b232e", b.hash
+  end
+
+  def test_outputs_hashable_string
+    headers = {
+        parent_hash: "0000000000000000000000000000000000000000000000000000000000000000",
+        transactions_hash: "203a0e37fa56a530f678d6331baf83a7b72d5d67c189aeb3ca17ed8a2a5bc654",
+        target: "0000100000000000000000000000000000000000000000000000000000000000",
+        timestamp: 1450564013,
+        nonce: 0,
+        hash: "000002b889bb79228ff41f86a65e2e0e143955cf746c2a33ed223d2701cd9c72"
+    }
+    transactions = [{inputs:[], outputs:[{amount: 25, address: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn04rVGD\/selxmPcYRmjc\nHE19e5XQOueBekYEdQHD5q06mzuLQqErjJDANt80JjF6Y69dOU23cqlZ1B\/2Pj48\nK+OROFBlrT5usrAJa6we0Ku33w6avl47PXanhcfi39GKNr8RadCKHoG1klvKqVEm\nuhJO\/2foXAb6LATB0YoQuH8sDvUmLHSSPTTCBO2YGtsCvlMBNxdnvGVyZA5iIPwu\nw7DN00jG8RJn0KQRDgTM+nFNxcw9bIOrfSxOmNTDo1y8EFwFiYZ6rORLN+cNL50T\nU1Kl\/ShX0dfvXauSjliVSl3sll1brVC500HYlAK61ox5BakdZG6R+3tJKe1RAs3P\nNQIDAQAB\n-----END PUBLIC KEY-----\n"}]}]
+    b = Block.new(headers, transactions)
+
+    assert_equal "#{headers[:parent_hash]}#{headers[:transactions_hash]}#{headers[:timestamp]}#{headers[:target]}#{headers[:nonce]}", b.hashable_string
   end
 
   # def setup
