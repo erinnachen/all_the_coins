@@ -10,7 +10,7 @@ class Block
     headers.each do |key, value|
       send("#{key}=", value)
     end
-    self.transactions = transactions
+    self.transactions = Block.create_transactions(transactions)
   end
 
   def hashable_string
@@ -19,14 +19,17 @@ class Block
 
   def self.from_json(json_block)
     block_params = JSON.parse(json_block, symbolize_names: true)
-    txns = create_transactions(block_params[:transactions])
-    Block.new(block_params[:header], txns)
+    Block.new(block_params[:header], block_params[:transactions])
   end
 
   def self.create_transactions(txns)
     txns.map do |txn|
       Transaction.new(txn[:inputs], txn[:outputs], txn[:timestamp])
     end
+  end
+
+  def rehash_block
+    self.hash = Digest::SHA256.hexdigest(hashable_string)
   end
   # attr_reader :transactions, :block_hash, :trans_hash, :parent_hash, :block_chain
   # attr_accessor :nonce, :timestamp, :target, :frequency

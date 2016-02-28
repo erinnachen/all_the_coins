@@ -45,8 +45,8 @@ class BlockTest < Minitest::Test
     assert_equal headers[:nonce], b.nonce
     assert_equal headers[:hash], b.hash
 
-    assert_equal transactions.first[:inputs], b.transactions.first[:inputs]
-    assert_equal transactions.first[:outputs], b.transactions.first[:outputs]
+    assert_equal transactions.first[:inputs], b.transactions.first.inputs
+    assert_equal transactions.first[:outputs], b.transactions.first.outputs
   end
 
   def test_can_change_nonce_and_hash
@@ -67,7 +67,7 @@ class BlockTest < Minitest::Test
     assert_equal 50000, b.nonce
     assert_equal "9ed1515819dec61fd361d5fdabb57f41ecce1a5fe1fe263b98c0d6943b9b232e", b.hash
   end
-
+  meta t: true
   def test_outputs_hashable_string
     headers = {
         parent_hash: "0000000000000000000000000000000000000000000000000000000000000000",
@@ -77,10 +77,27 @@ class BlockTest < Minitest::Test
         nonce: 0,
         hash: "000002b889bb79228ff41f86a65e2e0e143955cf746c2a33ed223d2701cd9c72"
     }
-    transactions = [{inputs:[], outputs:[{amount: 25, address: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn04rVGD\/selxmPcYRmjc\nHE19e5XQOueBekYEdQHD5q06mzuLQqErjJDANt80JjF6Y69dOU23cqlZ1B\/2Pj48\nK+OROFBlrT5usrAJa6we0Ku33w6avl47PXanhcfi39GKNr8RadCKHoG1klvKqVEm\nuhJO\/2foXAb6LATB0YoQuH8sDvUmLHSSPTTCBO2YGtsCvlMBNxdnvGVyZA5iIPwu\nw7DN00jG8RJn0KQRDgTM+nFNxcw9bIOrfSxOmNTDo1y8EFwFiYZ6rORLN+cNL50T\nU1Kl\/ShX0dfvXauSjliVSl3sll1brVC500HYlAK61ox5BakdZG6R+3tJKe1RAs3P\nNQIDAQAB\n-----END PUBLIC KEY-----\n"}]}]
+    transactions = [{inputs:[], outputs:[{amount: 25, address: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn04rVGD\/selxmPcYRmjc\nHE19e5XQOueBekYEdQHD5q06mzuLQqErjJDANt80JjF6Y69dOU23cqlZ1B\/2Pj48\nK+OROFBlrT5usrAJa6we0Ku33w6avl47PXanhcfi39GKNr8RadCKHoG1klvKqVEm\nuhJO\/2foXAb6LATB0YoQuH8sDvUmLHSSPTTCBO2YGtsCvlMBNxdnvGVyZA5iIPwu\nw7DN00jG8RJn0KQRDgTM+nFNxcw9bIOrfSxOmNTDo1y8EFwFiYZ6rORLN+cNL50T\nU1Kl\/ShX0dfvXauSjliVSl3sll1brVC500HYlAK61ox5BakdZG6R+3tJKe1RAs3P\nNQIDAQAB\n-----END PUBLIC KEY-----\n"}], timestamp: 1450565806588}]
     b = Block.new(headers, transactions)
 
     assert_equal "#{headers[:parent_hash]}#{headers[:transactions_hash]}#{headers[:timestamp]}#{headers[:target]}#{headers[:nonce]}", b.hashable_string
+  end
+
+  def test_block_can_be_rehashed
+    headers = {
+        parent_hash: "0000000000000000000000000000000000000000000000000000000000000000",
+        transactions_hash: "22f9f992b4c4d6dd8ad1375850027156406de7ab9a61ac8ab604a50fd58fed45",
+        target: "0000100000000000000000000000000000000000000000000000000000000000",
+        timestamp: 1456634914875,
+        nonce: 0,
+        hash: "000002b889bb79228ff41f86a65e2e0e143955cf746c2a33ed223d2701cd9c72"
+    }
+    transactions = [{inputs:[], outputs:[{amount: 25, address: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn04rVGD\/selxmPcYRmjc\nHE19e5XQOueBekYEdQHD5q06mzuLQqErjJDANt80JjF6Y69dOU23cqlZ1B\/2Pj48\nK+OROFBlrT5usrAJa6we0Ku33w6avl47PXanhcfi39GKNr8RadCKHoG1klvKqVEm\nuhJO\/2foXAb6LATB0YoQuH8sDvUmLHSSPTTCBO2YGtsCvlMBNxdnvGVyZA5iIPwu\nw7DN00jG8RJn0KQRDgTM+nFNxcw9bIOrfSxOmNTDo1y8EFwFiYZ6rORLN+cNL50T\nU1Kl\/ShX0dfvXauSjliVSl3sll1brVC500HYlAK61ox5BakdZG6R+3tJKe1RAs3P\nNQIDAQAB\n-----END PUBLIC KEY-----\n"}], timestamp: 1450565806588, hash: "71c0984f707ca01efc7403e2c434863c9c735cabce82dd6be59f322042e919b8"}]
+
+    b = Block.new(headers, transactions)
+    b.rehash_block
+
+    assert_equal "81f6dc21a0b48609a2fa79bcc0d309c58a96d75bb4a798f6bdcd256195ded3c7", b.hash
   end
 
   # def setup

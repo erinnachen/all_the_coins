@@ -11,7 +11,6 @@ class Transaction
     hash_transaction
   end
 
-
   def transaction_string
     inputs_string = inputs.map { |i| i[:source_hash] + i[:source_index].to_s + i[:signature] }.join
     outputs_string = outputs.map { |i| i[:amount].to_s + i[:address] }.join
@@ -26,7 +25,12 @@ class Transaction
     JSON.generate(tout)
   end
 
-private
+  def coinbase?
+    inputs == []
+  end
+
+  private
+
   def format_timestamp(timestamp)
     (timestamp.to_f*1000).to_i
   end

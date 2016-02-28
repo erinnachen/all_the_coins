@@ -30,12 +30,6 @@ class BlockChain
     chain.last
   end
 
-  # def add(block)
-  #   @current_block = block
-  #   @chain << current_block if current_block_valid?
-  #   self.current_block = nil
-  # end
-
   def height
     chain.count
   end
@@ -53,43 +47,11 @@ private
   #   @chain.last(10)
   # end
   #
-  # def current_block_valid?
-  #   return false unless parent_hash_valid?
-  #   return false unless timestamp_valid?
-  #   return false unless target_valid?
-  #   return false unless all_transactions_valid?
-  #   block_hash_valid?
+
   #
-  #   # TRANSACTIONS:
-  #   # Coinbase transaction amount is not more than allowed amount
-  #   # Not more than one coinbase transaction
-  #   # Transactions all valid...they will verify, and have enough money.
-  #   # First transaction is a coinbase(?)
+
   #
-  #
-  #   # Block as a whole
-  #   # Block will hash correctly.
-  # end
-  #
-  # def parent_hash_valid?
-  #   return true if height == 0
-  #   current_block.parent_hash == last.block_hash
-  # end
-  #
-  # def timestamp_valid?
-  #   return true if height == 0
-  #   current_block.timestamp > last.timestamp
-  # end
-  #
-  # def target_valid?
-  #   return false unless target_is_a_number?
-  #   return true if height == 0 || height == 1
-  #   target_within_bounds?
-  # end
-  #
-  # def target_is_a_number?
-  #   current_block.target.hex.to_s(16).rjust(64,"0") == current_block.target
-  # end
+
   #
   # def optimal_target
   #   separations = timestamps.each_cons(2).map { |a,b| b-a }
@@ -103,23 +65,7 @@ private
   #   (current_block.target.hex >= optimal_target-range) &&  (current_block.target.hex <= optimal_target+range)
   # end
   #
-  # def all_transactions_valid?
-  #   #Check coinbases
-  #   coinbases = current_block.transactions.find_all do |transaction|
-  #     transaction.coinbase?
-  #   end
-  #   return false unless coinbases.length == 1
-  #   coinbase = coinbases.first
-  #   return false unless coinbase == current_block.transactions.first
-  #   #require 'pry';binding.pry
-  #   return false unless coinbase.outputs.first["amount"] <= coinbase_value
-  #   # Check transactions hash correctly
-  #   return false unless current_block.transactions.all? do |transaction|
-  #     transaction_hash_valid?(transaction)
-  #   end
-  #   # Good inputs and outputs
-  #   true
-  # end
+
   #
   # def block_hash_valid?
   #   hash_current_block == current_block.block_hash
