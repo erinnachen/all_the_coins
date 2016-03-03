@@ -1,5 +1,7 @@
-require 'test_helper'
-require 'miner'
+require './test/test_helper'
+require './lib/miner'
+require "minitest/autorun"
+require "./lib/wallet"
 
 class BasicMinerTest < Minitest::Test
   def test_miner_has_a_zero_height_block_chain_by_default
@@ -32,23 +34,48 @@ class BasicMinerTest < Minitest::Test
     miner = Miner.new(wallet: wallet)
 
     miner.mine
-    block = miner.block_chain.latest
+    block = miner.block_chain.last
     timestamp = (Time.now.to_f* 1000).to_i
 
     assert_equal 1, miner.chain_height
 
-    assert_equal "d5a8ad8149c6e557c94f3cd49c1d13ad4f2c473aea6f97d730283dd1ac1d99c4", block.parent_hash
+    assert_equal "0000000000000000000000000000000000000000000000000000000000000000", block.parent_hash
     assert_equal "0fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", block.target
-    # assert_equal [{inputs:[], outputs:[{amount: 25, address: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwhmq0j/Vv1Gm9a3Sc07y\nnjIPAIEnKAHs0RvSWAfqBiHN+iMPyAaVxbd0ouQJFtNDBZkK+cL+Et5xaOg5QjBY\nH8hESS0qvqRFMp4RknkeZUw3z572scYu7/gw3LM6LD5j/gicIlagsWdJFTvbFqmy\n0LvikxxtWlVVfzt8FD/pcsesdxlqJClNmh5Vjwk6+nGgr6SZecZKB4ANGwb9kDS9\nxKQJ0A+vXRxdJtjkJ8Zw7zz4ngm5awsv884FEoLXtMaJnm4TGPKYWIlVDXdzhM6N\n1FKzt6wzqR6KS6ONCTTj2jR3C+3fkqvBZJIvijF5b+GRuop5OQMcCfFi75mHewJA\nqwIDAQAB\n-----END PUBLIC KEY-----\n"}], timestamp: 1450565806588}],
-    binding.pry
     assert_equal [], block.transactions.first.inputs
     assert_equal [{amount: 25, address: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwhmq0j/Vv1Gm9a3Sc07y\nnjIPAIEnKAHs0RvSWAfqBiHN+iMPyAaVxbd0ouQJFtNDBZkK+cL+Et5xaOg5QjBY\nH8hESS0qvqRFMp4RknkeZUw3z572scYu7/gw3LM6LD5j/gicIlagsWdJFTvbFqmy\n0LvikxxtWlVVfzt8FD/pcsesdxlqJClNmh5Vjwk6+nGgr6SZecZKB4ANGwb9kDS9\nxKQJ0A+vXRxdJtjkJ8Zw7zz4ngm5awsv884FEoLXtMaJnm4TGPKYWIlVDXdzhM6N\n1FKzt6wzqR6KS6ONCTTj2jR3C+3fkqvBZJIvijF5b+GRuop5OQMcCfFi75mHewJA\nqwIDAQAB\n-----END PUBLIC KEY-----\n"}], block.transactions.first.outputs
-    assert_equal 1450565806588, block.transactions.first.timestamp
-    assert_equal "c95e1cb4192f67f8c0fe20b755e1143b66d6d7e2c08f3c6480d1425708d97f86", block.transactions.first.hash
-
     assert timestamp >= block.timestamp
-    assert block.target > block.hash
+    assert block.target.hex > block.hash.hex
+    assert block.transactions_hash
   end
+
+  def test_can_mine_two_connected_blocks_in_a_row
+    miner = Miner.new(wallet: wallet)
+
+    miner.mine
+    miner.mine
+    b1 = miner.block_chain.first
+    b2 = miner.block_chain.last
+
+    assert_equal 2, miner.chain_height
+    assert_equal b1.hash, b2.parent_hash
+  end
+
+  def test_can_find_balance_for_the_mining_key
+    miner = Miner.new(wallet: wallet)
+    3.times { miner.mine }
+
+    assert_equal 75, miner.balance(wallet.public_key.to_pem)
+  end
+
+  def test_can_generate_transaction_to_pay_from_miner_key_to_other_key
+    # single input to single output (pay 25)
+    # multi input to single output (pay 50)
+    # single input multi output (pay 16)
+    # multi input multi output (pay 60)
+  end
+
+  # then look at adding these transactions into the chain via mining
+  # then check balance for key a and key b
 
   def wallet
     Wallet.new(File.expand_path('support', __dir__))

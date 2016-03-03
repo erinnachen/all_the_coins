@@ -11,6 +11,8 @@ class Block
       send("#{key}=", value)
     end
     self.transactions = Block.create_transactions(transactions)
+    hash_transactions
+    hash_block
   end
 
   def hashable_string
@@ -28,8 +30,20 @@ class Block
     end
   end
 
-  def rehash_block
+  def transactions_string
+    transactions.map { |txn| txn.hash }.join
+  end
+
+  def increment_nonce
+    self.nonce += 1
+  end
+
+  def hash_block
     self.hash = Digest::SHA256.hexdigest(hashable_string)
+  end
+
+  def hash_transactions
+    self.transactions_hash = Digest::SHA256.hexdigest(transactions_string)
   end
   # attr_reader :transactions, :block_hash, :trans_hash, :parent_hash, :block_chain
   # attr_accessor :nonce, :timestamp, :target, :frequency

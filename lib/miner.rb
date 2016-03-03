@@ -1,3 +1,4 @@
+require "./lib/block_chain"
 class Miner
   attr_reader :block_chain
 
@@ -17,7 +18,7 @@ class Miner
   end
 
   def latest_block_hash
-    block_chain.latest.hash
+    block_chain.last.hash
   end
 
   def read_block_chain(raw_data)
@@ -25,26 +26,29 @@ class Miner
   end
 
   def mine
-    # generate_new_block
     new_block = generate_new_block
-    # generate_headers
-    # generate_coinbase
-    # while target.hex > block.hash.hex
-    # change nonce in block
-    # rehash
-    # end
+    new_block.hash_block
+
+    until new_block.target.hex > new_block.hash.hex
+      new_block.increment_nonce
+      new_block.hash_block
+    end
     block_chain.add(new_block)
   end
 
+  def balance(public_key_pem)
 
+  end
+  
   private
 
   def wallet
     @wallet
   end
 
-  def default_parent_hash
-    "d5a8ad8149c6e557c94f3cd49c1d13ad4f2c473aea6f97d730283dd1ac1d99c4"
+  def parent_hash
+    return block_chain.last.hash if block_chain.last
+    "0" * 64
   end
 
   def default_target
@@ -61,23 +65,21 @@ class Miner
 
   def generate_new_block
     headers = generate_headers
-    transactions = coinbase
+    transactions = [coinbase]
     b = Block.new(headers, transactions)
   end
 
   def generate_headers
-    headers = {parent_hash: default_parent_hash,
-      transactions_hash: "TT",
+    {parent_hash: parent_hash,
       target: default_target,
       timestamp: timestamp,
-      nonce: 0,
-      hash: "0"}
+      nonce: 0}
   end
 
-  def generate_coinbase
-    [{inputs:[],
+  def coinbase
+    {inputs:[],
       outputs:[{amount: default_coinbase_amount, address: public_key_pem}],
-      timestamp: timestamp}]
+      timestamp: timestamp}
   end
 
 

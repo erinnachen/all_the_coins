@@ -1,3 +1,4 @@
+require "./lib/block"
 class BlockChain
   attr_accessor :current_block, :frequency, :bounds, :precision_level, :coinbase_value
 
@@ -22,11 +23,11 @@ class BlockChain
     chain << block
   end
 
-  def last
+  def first
     chain.first
   end
 
-  def latest
+  def last
     chain.last
   end
 
