@@ -64,7 +64,7 @@ class BasicMinerTest < Minitest::Test
     miner = Miner.new(wallet: wallet)
     3.times { miner.mine }
 
-    assert_equal 75, miner.balance(wallet.public_key.to_pem)
+    assert_equal 75, miner.get_balance(wallet.public_key.to_pem)
   end
 
   def test_can_generate_transaction_to_pay_from_miner_key_to_other_key

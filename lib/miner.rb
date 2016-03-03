@@ -28,7 +28,6 @@ class Miner
   def mine
     new_block = generate_new_block
     new_block.hash_block
-
     until new_block.target.hex > new_block.hash.hex
       new_block.increment_nonce
       new_block.hash_block
@@ -36,10 +35,10 @@ class Miner
     block_chain.add(new_block)
   end
 
-  def balance(public_key_pem)
-
+  def get_balance(public_key_pem)
+    block_chain.get_balance(public_key_pem)
   end
-  
+
   private
 
   def wallet

@@ -35,6 +35,22 @@ class BlockChain
     chain.count
   end
 
+  def get_balance(public_key_pem)
+    chain.reduce(0) do |sum, block|
+      block_total = 0
+      block.transactions.each do |transaction|
+        block_total += transaction.outputs.reduce(0) do |sum, output|
+          if output[:address] == public_key_pem
+            sum + output[:amount] if output[:address] == public_key_pem
+          else
+            sum
+          end
+        end
+      end
+      sum + block_total
+    end
+  end
+
 private
   def chain
     @chain
