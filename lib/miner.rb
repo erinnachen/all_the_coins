@@ -1,11 +1,12 @@
 require "./lib/block_chain"
 class Miner
-  attr_reader :block_chain
+  attr_reader :block_chain, :transactions
 
   def initialize(options = {})
     @block_chain = options[:block_chain] || BlockChain.new
     @wallet = options[:wallet] || Wallet.new
     @digest = options[:digest] || OpenSSL::Digest::SHA256.new
+    @transactions = []
     #@protocol = options[:protocol] || default_protocol
   end
 
@@ -39,6 +40,10 @@ class Miner
     block_chain.get_balance(public_key_pem)
   end
 
+  def transfer(amount, source_public_key)
+    block_chain.get_source_blocks(amount, public_key_pem)
+  end
+
   private
 
   def wallet
@@ -64,8 +69,8 @@ class Miner
 
   def generate_new_block
     headers = generate_headers
-    transactions = [coinbase]
-    b = Block.new(headers, transactions)
+    txns = [coinbase] + transactions
+    b = Block.new(headers, txns)
   end
 
   def generate_headers
@@ -76,10 +81,6 @@ class Miner
   end
 
   def coinbase
-    {inputs:[],
-      outputs:[{amount: default_coinbase_amount, address: public_key_pem}],
-      timestamp: timestamp}
+    Transaction.new([],[{amount: default_coinbase_amount, address: public_key_pem}])
   end
-
-
 end

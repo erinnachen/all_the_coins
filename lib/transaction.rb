@@ -29,6 +29,12 @@ class Transaction
     inputs == []
   end
 
+  def outputs_index(public_key_pem)
+    outputs.find_index do |output|
+      output[:address] == public_key_pem
+    end
+  end
+
   private
 
   def format_timestamp(timestamp)

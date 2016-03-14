@@ -10,7 +10,7 @@ class Block
     headers.each do |key, value|
       send("#{key}=", value)
     end
-    self.transactions = Block.create_transactions(transactions)
+    self.transactions = transactions
     hash_transactions
     hash_block
   end
@@ -21,7 +21,7 @@ class Block
 
   def self.from_json(json_block)
     block_params = JSON.parse(json_block, symbolize_names: true)
-    Block.new(block_params[:header], block_params[:transactions])
+    Block.new(block_params[:header], Block.create_transactions(block_params[:transactions]))
   end
 
   def self.create_transactions(txns)

@@ -21,6 +21,7 @@ class BasicMinerTest < Minitest::Test
   end
 
   def test_miner_can_read_a_block_chain_from_json
+    skip
     miner = Miner.new
     json_chain =  File.read(File.expand_path('support/small_sample_blocks.txt', __dir__))
 
@@ -67,13 +68,103 @@ class BasicMinerTest < Minitest::Test
     assert_equal 75, miner.get_balance(wallet.public_key.to_pem)
   end
 
-  def test_can_generate_transaction_to_pay_from_miner_key_to_other_key
-    # single input to single output (pay 25)
-    # multi input to single output (pay 50)
-    # single input multi output (pay 16)
-    # multi input multi output (pay 60)
+  def test_can_generate_transaction_to_pay_from_miner_key_to_other_key_single_input_to_single_output
+    miner = Miner.new(wallet: wallet)
+    path = File.expand_path( "support/new#{Time.now.strftime("%H%M%S")}", __dir__)
+    wallet_path = path+'/.wallet'
+    wallet2 = Wallet.new(File.expand_path(path, __dir__))
+    3.times do
+      miner.mine
+      sleep(1)
+    end
+
+    inputs = miner.transfer(25, miner.public_key_pem)
+    assert_equal 1, inputs.length
+    input = inputs.first
+    source_transaction = miner.block_chain.find_transaction(input[:source_hash])
+    assert_equal 25, source_transaction.outputs[input[:source_index]][:amount]
+    outputs = [{amount: 25, address: wallet2.public_key.to_pem}]
+    inputs, outputs = TransactionSigner.sign_transactions(inputs, outputs, wallet2.private_key)
+    miner.transactions << Transaction.new(inputs, outputs)
+    miner.mine
+    assert_equal 4, miner.chain_height
+
+    last = miner.block_chain.last
+    assert_equal 2, last.transactions.count
+    assert_equal 25, miner.get_balance(wallet2.public_key.to_pem)
+    assert_equal 75, miner.get_balance(miner.public_key_pem)
   end
 
+  def test_can_generate_transaction_to_pay_from_miner_key_to_other_key_multi_input_to_single_output
+    miner = Miner.new(wallet: wallet)
+    path = File.expand_path( "support/new#{Time.now.strftime("%H%M%S")}", __dir__)
+    wallet_path = path+'/.wallet'
+    wallet2 = Wallet.new(File.expand_path(path, __dir__))
+    2.times do
+      miner.mine
+      sleep(1)
+    end
+
+    inputs = miner.transfer(50, miner.public_key_pem)
+    assert_equal 2, inputs.length
+    assert_equal miner.block_chain.first.transactions.first.hash, inputs.first[:source_hash]
+    assert_equal miner.block_chain.last.transactions.first.hash, inputs.last[:source_hash]
+
+    outputs = [{amount: 50, address: wallet2.public_key.to_pem}]
+    inputs, outputs = TransactionSigner.sign_transactions(inputs, outputs, wallet2.private_key)
+    miner.transactions << Transaction.new(inputs, outputs)
+    miner.mine
+    assert_equal 3, miner.chain_height
+
+    last = miner.block_chain.last
+    assert_equal 2, last.transactions.count
+    assert_equal 50, miner.get_balance(wallet2.public_key.to_pem)
+    assert_equal 25, miner.get_balance(miner.public_key_pem)
+  end
+
+  def test_can_generate_transaction_to_pay_from_miner_key_to_other_key_single_input_to_multiple_output
+    miner = Miner.new(wallet: wallet)
+    path = File.expand_path( "support/new#{Time.now.strftime("%H%M%S")}", __dir__)
+    wallet_path = path+'/.wallet'
+    wallet2 = Wallet.new(File.expand_path(path, __dir__))
+    miner.mine
+
+    inputs = miner.transfer(16, miner.public_key_pem)
+    outputs = [{amount: 16, address: wallet2.public_key.to_pem}, {amount: 9, address: miner.public_key_pem}]
+    inputs, outputs = TransactionSigner.sign_transactions(inputs, outputs, wallet2.private_key)
+    miner.transactions << Transaction.new(inputs, outputs)
+    miner.mine
+
+    assert_equal 2, miner.chain_height
+    assert_equal 16, miner.get_balance(wallet2.public_key.to_pem)
+    assert_equal 34, miner.get_balance(miner.public_key_pem)
+  end
+
+  def test_can_generate_transaction_to_pay_from_miner_key_to_other_key_multiple_input_to_multiple_output
+    miner = Miner.new(wallet: wallet)
+    path = File.expand_path( "support/new#{Time.now.strftime("%H%M%S")}", __dir__)
+    wallet_path = path+'/.wallet'
+    wallet2 = Wallet.new(File.expand_path(path, __dir__))
+    2.times do
+      miner.mine
+      sleep(1)
+    end
+
+    inputs = miner.transfer(42, miner.public_key_pem)
+    outputs = [{amount: 42, address: wallet2.public_key.to_pem}, {amount: 8, address: miner.public_key_pem}]
+    inputs, outputs = TransactionSigner.sign_transactions(inputs, outputs, wallet2.private_key)
+    miner.transactions << Transaction.new(inputs, outputs)
+    miner.mine
+
+    assert_equal 3, miner.chain_height
+    assert_equal 42, miner.get_balance(wallet2.public_key.to_pem)
+    assert_equal 33, miner.get_balance(miner.public_key_pem)
+  end
+
+  # cannot transfer money when balance is less than actual amount
+  # multi input to single output (pay 50)
+  # single input multi output (pay 16)
+  # multi input multi output (pay 60)
   # then look at adding these transactions into the chain via mining
   # then check balance for key a and key b
 
