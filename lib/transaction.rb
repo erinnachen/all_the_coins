@@ -64,12 +64,9 @@ module TransactionSigner
   end
 
   def self.sign_inputs(inputs, signature)
-    signed = []
     inputs.each do |input|
       input[:signature] = signature
-      signed << input
     end
-    signed
   end
 
   def self.generate_signature(inputs, outputs, private_key, digest)
@@ -78,20 +75,3 @@ module TransactionSigner
     Base64.encode64(signed)
   end
 end
-
-
-
-  # def input_signature
-  #   inputs_string = inputs.map do |input|
-  #     input["source_hash"] + input["source_index"].to_s
-  #   end.join
-  #   outputs_string = outputs.map do |input|
-  #     input["amount"].to_s + input["address"]
-  #   end.join
-  #   signable_transaction = inputs_string + outputs_string
-  #   Base64.encode64(wallet.private_key.sign(OpenSSL::Digest::SHA256.new, signable_transaction))
-  # end
-  #
-  # def sign_inputs
-  #   inputs.each { |input| input["signature"] = input_signature }
-  # end
