@@ -1,4 +1,7 @@
 require "./lib/block_chain"
+require './lib/wallet'
+require './lib/server'
+
 class Miner
   attr_reader :block_chain, :transactions
 
@@ -7,6 +10,7 @@ class Miner
     @wallet = options[:wallet] || Wallet.new
     @digest = options[:digest] || OpenSSL::Digest::SHA256.new
     @transactions = []
+    @server = Server.new(options[:port])
     #@protocol = options[:protocol] || default_protocol
   end
 
@@ -40,8 +44,16 @@ class Miner
     block_chain.get_balance(public_key_pem)
   end
 
-  def transfer(amount, source_public_key)
-    block_chain.get_source_blocks(amount, public_key_pem)
+  def transfer(amount, source_public_key, target_public_key)
+    input_totals, inputs = block_chain.get_source_blocks(amount, public_key_pem)
+    outputs = [{amount: amount, address: target_public_key}]
+    outputs << {amount: input_totals - amount, address: source_public_key} if input_totals - amount > 0
+    [inputs, outputs]
+  end
+
+  def listen
+    puts "LISTENING"
+    @server.listen
   end
 
   private
@@ -53,10 +65,6 @@ class Miner
   def parent_hash
     return block_chain.last.hash if block_chain.last
     "0" * 64
-  end
-
-  def default_target
-    "0fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
   end
 
   def default_coinbase_amount
@@ -75,7 +83,7 @@ class Miner
 
   def generate_headers
     {parent_hash: parent_hash,
-      target: default_target,
+      target: block_chain.current_target,
       timestamp: timestamp,
       nonce: 0}
   end
