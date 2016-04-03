@@ -25,6 +25,7 @@ class BlockTest < Minitest::Test
   end
 
   def test_can_create_a_block_from_headers_and_transactions
+    skip
     headers = {
         parent_hash: "0000000000000000000000000000000000000000000000000000000000000000",
         transactions_hash: "203a0e37fa56a530f678d6331baf83a7b72d5d67c189aeb3ca17ed8a2a5bc654",
@@ -69,6 +70,7 @@ class BlockTest < Minitest::Test
   end
   meta t: true
   def test_outputs_hashable_string
+    skip
     headers = {
         parent_hash: "0000000000000000000000000000000000000000000000000000000000000000",
         transactions_hash: "203a0e37fa56a530f678d6331baf83a7b72d5d67c189aeb3ca17ed8a2a5bc654",
@@ -84,6 +86,7 @@ class BlockTest < Minitest::Test
   end
 
   def test_block_can_be_rehashed
+    skip
     headers = {
         parent_hash: "0000000000000000000000000000000000000000000000000000000000000000",
         transactions_hash: "22f9f992b4c4d6dd8ad1375850027156406de7ab9a61ac8ab604a50fd58fed45",

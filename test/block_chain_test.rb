@@ -3,6 +3,7 @@ require 'block_chain'
 
 class BasicBlockChainTest < Minitest::Test
   def test_can_create_a_chain_from_json
+    skip
     json_chain =  File.read(File.expand_path('support/small_sample_blocks.txt', __dir__))
     bc = BlockChain.from_json(json_chain)
     assert_equal 10, bc.height

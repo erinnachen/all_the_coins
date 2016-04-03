@@ -3,6 +3,7 @@ require 'block_validator'
 
 class BlockValidatorTest < Minitest::Test
   def test_can_validate_a_coinbase_transaction
+    skip
     block_chain = BlockChain.new
     headers = {
         parent_hash: "0000000000000000000000000000000000000000000000000000000000000000",

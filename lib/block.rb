@@ -1,6 +1,6 @@
 require 'bigdecimal'
 require 'json'
-require 'transaction'
+require './lib/transaction'
 
 class Block
   attr_accessor :hash, :parent_hash, :timestamp,

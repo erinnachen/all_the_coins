@@ -1,9 +1,10 @@
 require "./lib/block"
 class BlockChain
-  attr_accessor :current_block, :frequency, :bounds, :precision_level, :coinbase_value
+  # attr_accessor :current_block, :frequency, :bounds, :precision_level, :coinbase_value
+  attr_reader :blocks
 
   def initialize
-    @chain = []
+    @blocks = []
   end
 
   def self.from_json(raw_data)
@@ -16,24 +17,62 @@ class BlockChain
   end
 
   def add(block)
-    chain << block
+    blocks << block
   end
 
   def first
-    chain.first
+    blocks.first
   end
 
   def last
-    chain.last
+    blocks.last
   end
 
   def height
-    chain.count
+    blocks.count
   end
 
   def get_balance(public_key_pem)
+    unspent_transactions = find_unspent_transactions(public_key_pem)
+    unspent_transactions.reduce(0) do |sum, unspent|
+      sum + find_transaction(unspent[:source_hash]).outputs[unspent[:source_index]][:amount]
+    end
+  end
+
+  def get_source_blocks(amount, public_key_pem)
+    unspent = find_unspent_transactions(public_key_pem)
+    i = 0
+    txn_amount = 0
+    unspent.each do |txn|
+      txn_amount += find_transaction(txn[:source_hash]).outputs[txn[:source_index]][:amount]
+      break if txn_amount >= amount
+      i += 1
+    end
+    [txn_amount, unspent[0..i]]
+  end
+
+  def find_transaction(txn_hash)
+    blocks.each do |block|
+      txn = block.transactions.find do |txn|
+        txn.hash == txn_hash
+      end
+      return txn if txn
+    end
+    nil
+  end
+
+  def current_target
+    return default_target if height == 0 || height == 1
+    separations = blocks.last(10).each_cons(2).map { |a,b| b.timestamp-a.timestamp }
+    avg_sep = separations.reduce(0,:+)/(separations.length.to_f)
+    factor = avg_sep / 120.0
+    BigDecimal.new(factor*(last.target.to_i(16)), 15).to_i.to_s(16)
+  end
+
+private
+  def find_unspent_transactions(public_key_pem)
     unspent_transactions = []
-    chain.each do |block|
+    blocks.each do |block|
       block.transactions.each do |txn|
         txn.inputs.each do |input|
           i = find_index(unspent_transactions, input[:source_hash])
@@ -46,39 +85,7 @@ class BlockChain
         end
       end
     end
-
-    unspent_transactions.reduce(0) do |sum, unspent|
-      sum + find_transaction(unspent[:source_hash]).outputs[unspent[:source_index]][:amount]
-    end
-  end
-
-  def get_source_blocks(amount, public_key_pem)
-    unspent_transactions = []
-    chain.each do |block|
-      block.transactions.each do |txn|
-        if txn.coinbase? && txn.outputs.first[:address] == public_key_pem
-          unspent_transactions << {source_hash: txn.hash, source_index: 0}
-        end
-      end
-    end
-    i = 0
-    txn_amount = 0
-    unspent_transactions.each do |txn|
-      txn_amount += find_transaction(txn[:source_hash]).outputs[txn[:source_index]][:amount]
-      break if txn_amount >= amount
-      i += 1
-    end
-    unspent_transactions[0..i]
-  end
-
-  def find_transaction(txn_hash)
-    chain.each do |block|
-      txn = block.transactions.find do |txn|
-        txn.hash == txn_hash
-      end
-      return txn if txn
-    end
-    nil
+    unspent_transactions
   end
 
   def find_index(transactions, txn_hash)
@@ -87,11 +94,9 @@ class BlockChain
     end
   end
 
-private
-  def chain
-    @chain
+  def default_target
+    "0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
   end
-
   #
   # def optimal_target
   #   separations = timestamps.each_cons(2).map { |a,b| b-a }
