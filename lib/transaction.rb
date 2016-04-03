@@ -2,12 +2,24 @@ require 'json'
 
 class Transaction
   attr_accessor :inputs, :outputs, :timestamp, :hash
-  def initialize(inputs, outputs, timestamp = Time.now)
+  def initialize(inputs, outputs, timestamp = Time.now, hash = nil)
     self.inputs = inputs
     self.outputs = outputs
     timestamp = format_timestamp(timestamp) if timestamp.class == Time
     self.timestamp = timestamp
-    hash_transaction
+    unless hash
+      hash_transaction
+    else
+      self.hash = hash
+    end
+  end
+
+  def self.from_json(json_transaction)
+    data = JSON.parse(json_transaction, symbolize_names: true)
+    Transaction.new(data[:inputs],
+                    data[:outputs],
+                    data[:timestamp],
+                    data[:hash])
   end
 
   def transaction_string
@@ -20,7 +32,7 @@ class Transaction
     tout = {inputs: inputs,
             outputs: outputs,
             timestamp: timestamp,
-            hash: txn_hash}
+            hash: hash}
     JSON.generate(tout)
   end
 
