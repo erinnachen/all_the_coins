@@ -33,16 +33,25 @@ class Miner
     @block_chain= BlockChain.from_json(raw_data)
   end
 
-  def mine
-    @mining = Thread.new do
-      new_block = generate_new_block
-      new_block.hash_block
-      until new_block.target.hex > new_block.hash.hex
-        new_block.increment_nonce
-        new_block.hash_block
+  def mine(nblocks = nil)
+    if nblocks
+      nblocks.times do |n|
+        puts "MINING: #{nblocks}"
+        mine_new_block
       end
-      block_chain.add(new_block)
+    else
+      loop { mine_new_block }
     end
+  end
+
+  def mine_new_block
+    new_block = generate_new_block
+    new_block.hash_block
+    until new_block.target.hex > new_block.hash.hex
+      new_block.increment_nonce
+      new_block.hash_block
+    end
+    block_chain.add(new_block)
   end
 
   def get_balance(public_key_pem)
@@ -104,10 +113,6 @@ class Miner
     end
     Thread.kill(@listen)
     @listen.join
-    if @mining
-      Thread.kill(@mining)
-      @mining.join
-    end
     puts "DONE"
   end
 

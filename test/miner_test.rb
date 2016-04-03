@@ -4,28 +4,31 @@ require "minitest/autorun"
 require "./lib/wallet"
 
 class BasicMinerTest < Minitest::Test
+  attr_reader :miner
+  def teardown
+    puts "TEARDOWN"
+    @miner.close
+  end
+
   def test_miner_has_a_zero_height_block_chain_by_default
-    skip
-    miner = Miner.new
+    @miner = Miner.new
     assert_equal 0, miner.chain_height
   end
 
   def test_miner_has_a_valid_public_key_by_default
-    skip
-    miner = Miner.new
+    @miner = Miner.new
     assert OpenSSL::PKey.read(miner.public_key_pem)
   end
 
   def test_miner_can_be_created_with_a_wallet
-    skip
-    miner = Miner.new(wallet: wallet)
+    @miner = Miner.new(wallet: wallet)
 
     assert_equal "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwhmq0j/Vv1Gm9a3Sc07y\nnjIPAIEnKAHs0RvSWAfqBiHN+iMPyAaVxbd0ouQJFtNDBZkK+cL+Et5xaOg5QjBY\nH8hESS0qvqRFMp4RknkeZUw3z572scYu7/gw3LM6LD5j/gicIlagsWdJFTvbFqmy\n0LvikxxtWlVVfzt8FD/pcsesdxlqJClNmh5Vjwk6+nGgr6SZecZKB4ANGwb9kDS9\nxKQJ0A+vXRxdJtjkJ8Zw7zz4ngm5awsv884FEoLXtMaJnm4TGPKYWIlVDXdzhM6N\n1FKzt6wzqR6KS6ONCTTj2jR3C+3fkqvBZJIvijF5b+GRuop5OQMcCfFi75mHewJA\nqwIDAQAB\n-----END PUBLIC KEY-----\n", miner.public_key_pem
   end
 
   def test_miner_can_read_a_block_chain_from_json
     skip
-    miner = Miner.new
+    @miner = Miner.new
     json_chain =  File.read(File.expand_path('support/small_sample_blocks.txt', __dir__))
 
     miner.read_block_chain(json_chain)
@@ -35,9 +38,9 @@ class BasicMinerTest < Minitest::Test
   end
 
   def test_miner_can_create_a_default_coinbase_transaction
-    skip
-    miner = Miner.new(wallet: wallet)
-    miner.mine
+    @miner = Miner.new(wallet: wallet)
+    miner.mine(1)
+    miner.close
     block = miner.block_chain.last
     timestamp = (Time.now.to_f* 1000).to_i
 
@@ -53,9 +56,8 @@ class BasicMinerTest < Minitest::Test
   end
 
   def test_can_mine_two_connected_blocks_in_a_row
-    skip
-    miner = Miner.new(wallet: wallet)
-    2.times { miner.mine }
+    @miner = Miner.new(wallet: wallet)
+    miner.mine(2)
     b1 = miner.block_chain.first
     b2 = miner.block_chain.last
 
@@ -64,20 +66,15 @@ class BasicMinerTest < Minitest::Test
   end
 
   def test_can_find_balance_for_the_mining_key
-    skip
-    miner = Miner.new(wallet: wallet)
-    3.times { miner.mine }
+    @miner = Miner.new(wallet: wallet)
+    miner.mine(3)
 
     assert_equal 75, miner.get_balance(wallet.public_key.to_pem)
   end
 
   def test_can_generate_transaction_to_pay_from_miner_key_to_other_key_single_input_to_single_output
-    skip
-    miner = Miner.new(wallet: wallet)
-    3.times do
-      miner.mine
-      sleep(1)
-    end
+    @miner = Miner.new(wallet: wallet)
+    miner.mine(3)
 
     inputs, outputs = miner.transfer(25, miner.public_key_pem, wallet2.public_key.to_pem)
     assert_equal 1, inputs.length
@@ -87,7 +84,7 @@ class BasicMinerTest < Minitest::Test
     assert_equal [{amount: 25, address: wallet2.public_key.to_pem}], outputs
     inputs, outputs = TransactionSigner.sign_transactions(inputs, outputs, wallet2.private_key)
     miner.transactions << Transaction.new(inputs, outputs)
-    miner.mine
+    miner.mine(1)
     assert_equal 4, miner.chain_height
 
     last = miner.block_chain.last
@@ -97,12 +94,8 @@ class BasicMinerTest < Minitest::Test
   end
 
   def test_can_generate_transaction_to_pay_from_miner_key_to_other_key_multi_input_to_single_output
-    skip
-    miner = Miner.new(wallet: wallet)
-    2.times do
-      miner.mine
-      sleep(1)
-    end
+    @miner = Miner.new(wallet: wallet)
+    miner.mine(2)
 
     inputs, outputs = miner.transfer(50, miner.public_key_pem, wallet2.public_key.to_pem)
     assert_equal 2, inputs.length
@@ -111,7 +104,7 @@ class BasicMinerTest < Minitest::Test
 
     inputs, outputs = TransactionSigner.sign_transactions(inputs, outputs, wallet2.private_key)
     miner.transactions << Transaction.new(inputs, outputs)
-    miner.mine
+    miner.mine(1)
     assert_equal 3, miner.chain_height
 
     last = miner.block_chain.last
@@ -121,14 +114,13 @@ class BasicMinerTest < Minitest::Test
   end
 
   def test_can_generate_transaction_to_pay_from_miner_key_to_other_key_single_input_to_multiple_output
-    skip
-    miner = Miner.new(wallet: wallet)
-    miner.mine
+    @miner = Miner.new(wallet: wallet)
+    miner.mine(1)
 
     inputs, outputs = miner.transfer(16, miner.public_key_pem, wallet2.public_key.to_pem)
     inputs, outputs = TransactionSigner.sign_transactions(inputs, outputs, wallet2.private_key)
     miner.transactions << Transaction.new(inputs, outputs)
-    miner.mine
+    miner.mine(1)
 
     assert_equal 2, miner.chain_height
     assert_equal 16, miner.get_balance(wallet2.public_key.to_pem)
@@ -136,17 +128,16 @@ class BasicMinerTest < Minitest::Test
   end
 
   def test_can_generate_transaction_to_pay_from_miner_key_to_other_key_multiple_input_to_multiple_output
-    skip
-    miner = Miner.new(wallet: wallet)
+    @miner = Miner.new(wallet: wallet)
     2.times do
-      miner.mine
+      miner.mine(1)
       sleep(1)
     end
 
     inputs, outputs = miner.transfer(42, miner.public_key_pem, wallet2.public_key.to_pem)
     inputs, outputs = TransactionSigner.sign_transactions(inputs, outputs, wallet2.private_key)
     miner.transactions << Transaction.new(inputs, outputs)
-    miner.mine
+    miner.mine(1)
 
     assert_equal 3, miner.chain_height
     assert_equal 42, miner.get_balance(wallet2.public_key.to_pem)
@@ -154,9 +145,8 @@ class BasicMinerTest < Minitest::Test
   end
 
   def test_miner_sets_valid_targets_for_two_mined_blocks
-    skip
-    miner = Miner.new(wallet: wallet)
-    2.times { miner.mine }
+    @miner = Miner.new(wallet: wallet)
+    2.times { miner.mine(1) }
     assert_equal default_target, miner.block_chain.last.target
   end
 
