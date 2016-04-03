@@ -3,14 +3,17 @@ require './lib/wallet'
 require './lib/server'
 
 class Miner
-  attr_reader :block_chain, :transactions
+  attr_reader :block_chain, :transactions, :connected_peers
 
   def initialize(options = {})
     @block_chain = options[:block_chain] || BlockChain.new
     @wallet = options[:wallet] || Wallet.new
     @digest = options[:digest] || OpenSSL::Digest::SHA256.new
+    @port = options[:port] || 8334
     @transactions = []
-    @server = Server.new(options[:port])
+    @threads = []
+    @connected_peers = []
+    self.listen
     #@protocol = options[:protocol] || default_protocol
   end
 
@@ -53,7 +56,44 @@ class Miner
 
   def listen
     puts "LISTENING"
-    @server.listen
+    @threads << Thread.new do
+      Socket.tcp_server_loop(@port) do |conn, client_addrinfo|
+        input = conn.gets
+        if input == "Quit"
+          puts "QUITTING"
+          break
+        end
+        puts "MESSAGE RECEIVED from #{client_addrinfo.getnameinfo[0]}:#{client_addrinfo.getnameinfo[1]}"
+        parsed = JSON.parse(input.chomp, symbolize_names: true)
+        if parsed[:message_type] == "echo"
+          response = parsed
+          conn.write(response.to_json+"\n\n")
+          puts "MESSAGE SENT"
+        elsif parsed[:message_type] == "chat"
+          puts parsed[:payload]
+        elsif parsed[:message_type] == "add_peer"
+          connected_peers << parsed[:payload].to_i
+          response = {message_type: "add_peer", payload: "Added port #{parsed[:payload]} to peer list!"}
+          conn.write(response.to_json+"\n\n")
+        elsif parsed[:message_type] == "remove_peer"
+          connected_peers.delete(parsed[:payload].to_i)
+          response = {message_type: "remove_peer", payload: "Removed port #{parsed[:payload]} to peer list!"}
+          conn.write(response.to_json+"\n\n")
+        elsif parsed[:message_type] == "list_peers"
+          response = {message_type: "list_peers", payload: connected_peers}
+          conn.write(response.to_json+"\n\n")
+        end
+        conn.close
+      end
+    end
+  end
+
+  def close
+    puts "WAITING ON: #{@threads.count} threads"
+    @threads.each do |thread|
+     thread.join
+    end
+    puts "DONE"
   end
 
   private
