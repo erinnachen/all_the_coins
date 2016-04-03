@@ -13,7 +13,7 @@ class Miner
     @transactions = []
     @threads = []
     @connected_peers = []
-    self.listen
+    @listen = Thread.new{ self.listen }
     #@protocol = options[:protocol] || default_protocol
   end
 
@@ -34,13 +34,15 @@ class Miner
   end
 
   def mine
-    new_block = generate_new_block
-    new_block.hash_block
-    until new_block.target.hex > new_block.hash.hex
-      new_block.increment_nonce
+    @mining = Thread.new do
+      new_block = generate_new_block
       new_block.hash_block
+      until new_block.target.hex > new_block.hash.hex
+        new_block.increment_nonce
+        new_block.hash_block
+      end
+      block_chain.add(new_block)
     end
-    block_chain.add(new_block)
   end
 
   def get_balance(public_key_pem)
@@ -56,33 +58,40 @@ class Miner
 
   def listen
     puts "LISTENING"
-    @threads << Thread.new do
-      Socket.tcp_server_loop(@port) do |conn, client_addrinfo|
-        input = conn.gets
-        if input == "Quit"
-          puts "QUITTING"
-          break
+    @mutex = Mutex.new
+    Socket.tcp_server_loop(@port) do |conn, client_addrinfo|
+      @threads << Thread.new do
+        puts "Connection established: #{client_addrinfo.getnameinfo[0]}:#{client_addrinfo.getnameinfo[1]}"
+        while input = conn.gets
+          puts "RECEIVED: #{input.inspect}"
+          break if input == "\n"
+          parsed = JSON.parse(input.chomp, symbolize_names: true)
+          if parsed[:message_type] == "echo"
+            response = {response: parsed[:payload]}
+            conn.write(response.to_json+"\n")
+            puts "MESSAGE SENT #{response.to_json+"\n"}"
+          elsif parsed[:message_type] == "chat"
+            puts parsed[:payload]
+          elsif parsed[:message_type] == "add_peer"
+            @mutex.synchronize do
+              connected_peers << parsed[:payload].to_i
+            end
+            response = {response: "Added port #{parsed[:payload]} to peer list!"}
+            conn.write(response.to_json+"\n")
+            puts "MESSAGE SENT #{response.to_json}"
+          elsif parsed[:message_type] == "remove_peer"
+            connected_peers.delete(parsed[:payload].to_i)
+            response = {message_type: "remove_peer", payload: "Removed port #{parsed[:payload]} to peer list!"}
+            conn.write(response.to_json+"\n")
+          elsif parsed[:message_type] == "list_peers"
+            response = {response: connected_peers}
+            conn.write(response.to_json+"\n")
+          elsif parsed[:message_type] == "get_height"
+            response = {response: chain_height}
+            conn.write(response.to_json+"\n")
+          end
         end
-        puts "MESSAGE RECEIVED from #{client_addrinfo.getnameinfo[0]}:#{client_addrinfo.getnameinfo[1]}"
-        parsed = JSON.parse(input.chomp, symbolize_names: true)
-        if parsed[:message_type] == "echo"
-          response = parsed
-          conn.write(response.to_json+"\n\n")
-          puts "MESSAGE SENT"
-        elsif parsed[:message_type] == "chat"
-          puts parsed[:payload]
-        elsif parsed[:message_type] == "add_peer"
-          connected_peers << parsed[:payload].to_i
-          response = {message_type: "add_peer", payload: "Added port #{parsed[:payload]} to peer list!"}
-          conn.write(response.to_json+"\n\n")
-        elsif parsed[:message_type] == "remove_peer"
-          connected_peers.delete(parsed[:payload].to_i)
-          response = {message_type: "remove_peer", payload: "Removed port #{parsed[:payload]} to peer list!"}
-          conn.write(response.to_json+"\n\n")
-        elsif parsed[:message_type] == "list_peers"
-          response = {message_type: "list_peers", payload: connected_peers}
-          conn.write(response.to_json+"\n\n")
-        end
+        puts "Closing connection: #{client_addrinfo.getnameinfo[0]}:#{client_addrinfo.getnameinfo[1]}"
         conn.close
       end
     end
@@ -91,7 +100,13 @@ class Miner
   def close
     puts "WAITING ON: #{@threads.count} threads"
     @threads.each do |thread|
-     thread.join
+      thread.join
+    end
+    Thread.kill(@listen)
+    @listen.join
+    if @mining
+      Thread.kill(@mining)
+      @mining.join
     end
     puts "DONE"
   end
