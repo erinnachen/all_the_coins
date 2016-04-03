@@ -1,5 +1,6 @@
 require_relative 'test_helper'
 require 'transaction'
+require 'transaction_signer'
 require 'wallet'
 
 class TransactionTest < Minitest::Test
