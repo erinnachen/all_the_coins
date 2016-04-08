@@ -1,7 +1,7 @@
-require './test/test_helper'
-require './lib/miner'
-require "minitest/autorun"
-require "./lib/wallet"
+require 'test_helper'
+require 'miner'
+require "wallet"
+require 'transaction_signer'
 
 class BasicMinerTest < Minitest::Test
   attr_reader :miner
@@ -151,18 +151,18 @@ class BasicMinerTest < Minitest::Test
     assert_equal default_target, miner.block_chain.last.target
   end
 
+  meta t: true
   def test_miner_sets_valid_targets_for_series_of_mined_blocks
-    skip
-    miner = Miner.new({wallet: wallet, no_mining: true})
-    2.times { miner.mine; sleep(rand(5))}
+    @miner = Miner.new({wallet: wallet, no_mining: true})
+    2.times { miner.mine_new_block; sleep(rand(5))}
     13.times do |n|
-      miner.mine
       separations = miner.block_chain.blocks.last(10).each_cons(2).map { |a,b| b.timestamp-a.timestamp }
       avg_sep = separations.reduce(0,:+)/(separations.length.to_f)
       factor = avg_sep / 120.0
       optimal_target = BigDecimal.new(factor*(miner.block_chain.last.target.to_i(16)), 15).to_i
       range = optimal_target*1/100
 
+      miner.mine_new_block
       assert (miner.block_chain.last.target.hex >= optimal_target-range) &&  (miner.block_chain.last.target.hex  <= optimal_target+range)
     end
   end

@@ -2,10 +2,11 @@ require "./lib/block"
 
 class BlockChain
   # attr_accessor :current_block, :frequency, :bounds, :precision_level, :coinbase_value
-  attr_reader :blocks
+  attr_reader :blocks, :frequency
 
-  def initialize
+  def initialize(options = {})
     @blocks = []
+    @frequency = options[:frequency] || 120.0
   end
 
   def self.from_json(raw_data)
@@ -71,7 +72,7 @@ class BlockChain
     return default_target if height == 0 || height == 1
     separations = blocks.last(10).each_cons(2).map { |a,b| b.timestamp-a.timestamp }
     avg_sep = separations.reduce(0,:+)/(separations.length.to_f)
-    factor = avg_sep / 120.0
+    factor = avg_sep / frequency
     BigDecimal.new(factor*(last.target.to_i(16)), 15).to_i.to_s(16)
   end
 
