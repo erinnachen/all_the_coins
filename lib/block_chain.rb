@@ -1,4 +1,5 @@
 require "./lib/block"
+
 class BlockChain
   # attr_accessor :current_block, :frequency, :bounds, :precision_level, :coinbase_value
   attr_reader :blocks

@@ -14,6 +14,7 @@ class Miner
     @threads = []
     @connected_peers = []
     @listen = Thread.new{ self.listen }
+    self.mine unless options[:no_mining]
     #@protocol = options[:protocol] || default_protocol
   end
 

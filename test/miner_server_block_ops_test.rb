@@ -5,7 +5,7 @@ class MinerServerBlockOpsTest < Minitest::Test
   def setup
     puts "SETUP"
     @port = 8334
-    @miner = Miner.new(port: @port, mine: false)
+    @miner = Miner.new({port: @port, no_mining: true})
   end
 
   def teardown
