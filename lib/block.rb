@@ -45,7 +45,7 @@ class Block
   end
 
   def hash_transactions
-    self.transactions_hash = Digest::SHA256.hexdigest(transactions_string)
+    @transactions_hash = Digest::SHA256.hexdigest(transactions_string)
   end
 
   def to_json
