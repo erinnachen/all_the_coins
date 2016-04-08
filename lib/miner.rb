@@ -33,13 +33,8 @@ class Miner
     @block_chain= BlockChain.from_json(raw_data)
   end
 
-  def mine(nblocks = nil)
-    if nblocks
-      nblocks.times do |n|
-        puts "MINING: #{nblocks}"
-        mine_new_block
-      end
-    else
+  def mine
+    @mining = Thread.new do
       loop { mine_new_block }
     end
   end
@@ -113,6 +108,7 @@ class Miner
     end
     Thread.kill(@listen)
     @listen.join
+    Thread.kill(@mining) if @mining
     puts "DONE"
   end
 

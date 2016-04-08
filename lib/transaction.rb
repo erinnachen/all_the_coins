@@ -2,16 +2,11 @@ require 'json'
 
 class Transaction
   attr_accessor :inputs, :outputs, :timestamp, :hash
-  def initialize(inputs, outputs, timestamp = Time.now, hash = nil)
+  def initialize(inputs, outputs, timestamp = nil, hash = nil)
     self.inputs = inputs
     self.outputs = outputs
-    timestamp = format_timestamp(timestamp) if timestamp.class == Time
-    self.timestamp = timestamp
-    unless hash
-      hash_transaction
-    else
-      self.hash = hash
-    end
+    self.timestamp = timestamp || format_timestamp(Time.now)
+    self.hash = hash || hash_transaction
   end
 
   def self.from_json(json_transaction)
