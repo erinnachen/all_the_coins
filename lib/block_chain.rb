@@ -1,4 +1,5 @@
 require "./lib/block"
+
 class BlockChain
   # attr_accessor :current_block, :frequency, :bounds, :precision_level, :coinbase_value
   attr_reader :blocks
@@ -30,6 +31,11 @@ class BlockChain
 
   def height
     blocks.count
+  end
+
+  def to_json
+    chain = blocks.map { |block| block.to_h }
+    JSON.generate(chain)
   end
 
   def get_balance(public_key_pem)

@@ -14,6 +14,7 @@ class Miner
     @threads = []
     @connected_peers = []
     @listen = Thread.new{ self.listen }
+    self.mine unless options[:no_mining]
     #@protocol = options[:protocol] || default_protocol
   end
 
@@ -35,14 +36,18 @@ class Miner
 
   def mine
     @mining = Thread.new do
-      new_block = generate_new_block
-      new_block.hash_block
-      until new_block.target.hex > new_block.hash.hex
-        new_block.increment_nonce
-        new_block.hash_block
-      end
-      block_chain.add(new_block)
+      loop { mine_new_block }
     end
+  end
+
+  def mine_new_block
+    new_block = generate_new_block
+    new_block.hash_block
+    until new_block.target.hex > new_block.hash.hex
+      new_block.increment_nonce
+      new_block.hash_block
+    end
+    block_chain.add(new_block)
   end
 
   def get_balance(public_key_pem)
@@ -104,10 +109,7 @@ class Miner
     end
     Thread.kill(@listen)
     @listen.join
-    if @mining
-      Thread.kill(@mining)
-      @mining.join
-    end
+    Thread.kill(@mining) if @mining
     puts "DONE"
   end
 
