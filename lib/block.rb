@@ -27,7 +27,6 @@ class Block
 
   def self.create_transactions(txns)
     txns.map do |txn|
-      txn = JSON.parse(txn, symbolize_names: true) if txn.class == String
       Transaction.new(txn[:inputs], txn[:outputs], txn[:timestamp], txn[:hash])
     end
   end
@@ -48,12 +47,26 @@ class Block
     @transactions_hash = Digest::SHA256.hexdigest(transactions_string)
   end
 
-  def to_json
-    block = { header: generate_headers,
-              transactions: transactions.map {|txn| txn.to_json }
-            }
-    block.to_json
+  def to_h
+    { header: generate_headers,
+      transactions: transactions.map {|txn| txn.to_h }
+    }
   end
+
+  def to_json
+    JSON.generate(self.to_h)
+  end
+
+  # def == (block)
+  #   return false unless hash == block.hash
+  #   return false unless parent_hash == block.parent_hash
+  #   return false unless timestamp == block.timestamp
+  #   return false unless target == block.target
+  #   return false unless nonce == block.nonce
+  #   return false unless transactions == block.transactions
+  #   return false unless transactions_hash == block.transactions_hash
+  #   true
+  # end
 
   private
     def generate_headers

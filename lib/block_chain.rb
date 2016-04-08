@@ -32,6 +32,11 @@ class BlockChain
     blocks.count
   end
 
+  def to_json
+    chain = blocks.map { |block| block.to_h }
+    JSON.generate(chain)
+  end
+
   def get_balance(public_key_pem)
     unspent_transactions = find_unspent_transactions(public_key_pem)
     unspent_transactions.reduce(0) do |sum, unspent|

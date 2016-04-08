@@ -23,12 +23,15 @@ class Transaction
     "#{inputs_string}#{outputs_string}#{timestamp}"
   end
 
+  def to_h
+    {inputs: inputs,
+     outputs: outputs,
+     timestamp: timestamp,
+     hash: hash}
+  end
+
   def to_json
-    tout = {inputs: inputs,
-            outputs: outputs,
-            timestamp: timestamp,
-            hash: hash}
-    JSON.generate(tout)
+    JSON.generate(self.to_h)
   end
 
   def coinbase?

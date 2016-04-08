@@ -27,7 +27,6 @@ class BasicMinerTest < Minitest::Test
   end
 
   def test_miner_can_read_a_block_chain_from_json
-    skip
     @miner = Miner.new
     json_chain =  File.read(File.expand_path('support/small_sample_blocks.txt', __dir__))
 

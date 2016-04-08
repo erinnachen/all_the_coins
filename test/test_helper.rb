@@ -36,4 +36,20 @@ module TestHelpers
     cb.hash_transaction
     cb
   end
+
+  def sample_block
+    headers = {
+        parent_hash: "0000000000000000000000000000000000000000000000000000000000000000",
+        transactions_hash: "22f9f992b4c4d6dd8ad1375850027156406de7ab9a61ac8ab604a50fd58fed45",
+        target: "0000100000000000000000000000000000000000000000000000000000000000",
+        timestamp: 1456634914875,
+        nonce: 0,
+        hash: "000002b889bb79228ff41f86a65e2e0e143955cf746c2a33ed223d2701cd9c72"
+    }
+    transactions = [{inputs:[], outputs:[{amount: 25, address: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn04rVGD\/selxmPcYRmjc\nHE19e5XQOueBekYEdQHD5q06mzuLQqErjJDANt80JjF6Y69dOU23cqlZ1B\/2Pj48\nK+OROFBlrT5usrAJa6we0Ku33w6avl47PXanhcfi39GKNr8RadCKHoG1klvKqVEm\nuhJO\/2foXAb6LATB0YoQuH8sDvUmLHSSPTTCBO2YGtsCvlMBNxdnvGVyZA5iIPwu\nw7DN00jG8RJn0KQRDgTM+nFNxcw9bIOrfSxOmNTDo1y8EFwFiYZ6rORLN+cNL50T\nU1Kl\/ShX0dfvXauSjliVSl3sll1brVC500HYlAK61ox5BakdZG6R+3tJKe1RAs3P\nNQIDAQAB\n-----END PUBLIC KEY-----\n"}], timestamp: 1450565806588, hash: "71c0984f707ca01efc7403e2c434863c9c735cabce82dd6be59f322042e919b8"}].map { |txn|
+      Transaction.new(txn[:inputs], txn[:outputs], txn[:timestamp], txn[:hash])
+    }
+
+    Block.new(headers, transactions)
+  end
 end
