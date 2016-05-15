@@ -47,12 +47,14 @@ Wallet GUI, Node DNS Server, etc.
 ### Knowns and Unknowns
 
 This is an exploratory project to understand the subtleties that are involved with implementation of a cryptocurrency. The current functionality is:
+
 1. Can create wallets and sign transactions
 2. Transactions have inputs and outputs
 3. A miner can mine blocks and accept transactions
 4. A miner can accept connections through TCP sockets
  
 In the works:
+
 1. Block validations
 2. Change to Elliptic Curve Cryptography as the digestion mechanism
 3. Consensus algorithms
