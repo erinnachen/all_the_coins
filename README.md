@@ -46,14 +46,15 @@ Wallet GUI, Node DNS Server, etc.
 
 ### Knowns and Unknowns
 
-Anyone who's spent much time at Turing knows we try to be very comfortable
-"operating in uncertainty." This is definitely an experiment and there will
-certainly be hiccups along the way. Most importantly, there will be much less
-handholding throughout the process than in standard Turing projects.
-
-I have a general plan and rough design for how each system will work, but
-it's going to be up to all of us to collectively work out the details along
-the way. I'll be directing lots of questions to the group and relying on
-our collective problem-solving ability to resolve them.
+This is an exploratory project to understand the subtleties that are involved with implementation of a cryptocurrency. The current functionality is:
+1. Can create wallets and sign transactions
+2. Transactions have inputs and outputs
+3. A miner can mine blocks and accept transactions
+4. A miner can accept connections through TCP sockets
+ 
+In the works:
+1. Block validations
+2. Change to Elliptic Curve Cryptography as the digestion mechanism
+3. Consensus algorithms
 
 
